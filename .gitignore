@@ -1,0 +1,10 @@
+bin/
+obj/
+*.db
+*.db-shm
+*.db-wal
+wwwroot/uploads/
+node_modules/
+.angular/
+dist/
+.vs/
