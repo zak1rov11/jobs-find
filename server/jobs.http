@@ -1,0 +1,96 @@
+@host = http://localhost:5001
+
+### Регистрация
+POST {{host}}/api/auth/register
+Content-Type: application/json
+
+{ "userName": "student2", "password": "Student123" }
+
+### Вход (демо-пользователь, автор 5 стартовых вакансий)
+# @name login
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "demo", "password": "Demo123!" }
+
+###
+@token = {{login.response.body.$.token}}
+
+### Список (страницы, фильтры, сортировка)
+GET {{host}}/api/jobs?page=1&pageSize=3&sphereId=1&remote=true&minSalary=3000000&sort=salary
+
+### Сферы
+GET {{host}}/api/spheres
+
+### Одна вакансия (200)
+GET {{host}}/api/jobs/1
+
+### Нет такой (404)
+GET {{host}}/api/jobs/999
+
+### Создать без входа (401)
+POST {{host}}/api/jobs
+Content-Type: application/json
+
+{ "title": "Тестер", "company": "QA Lab", "salaryFrom": 4000000, "salaryTo": 6000000, "isRemote": true, "sphereId": 1 }
+
+### Создать (201)
+POST {{host}}/api/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{ "title": "Тестировщик", "company": "QA Lab", "salaryFrom": 4000000, "salaryTo": 6000000, "isRemote": true, "sphereId": 1 }
+
+### Особое правило: зарплата от больше зарплаты до (400)
+POST {{host}}/api/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{ "title": "Тестировщик", "company": "QA Lab", "salaryFrom": 9000000, "salaryTo": 5000000, "isRemote": true, "sphereId": 1 }
+
+### Ошибки валидации (400)
+POST {{host}}/api/jobs
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{ "title": "", "company": "", "salaryFrom": -5, "salaryTo": 0, "isRemote": false, "sphereId": 0 }
+
+### Изменить (200)
+PUT {{host}}/api/jobs/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{ "title": "Backend-разработчик", "company": "TechCorp", "salaryFrom": 9000000, "salaryTo": 16000000, "isRemote": true, "sphereId": 1 }
+
+### Войти вторым пользователем (для 403)
+# @name login2
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{ "userName": "student2", "password": "Student123" }
+
+###
+@token2 = {{login2.response.body.$.token}}
+
+### Чужая вакансия (403)
+PUT {{host}}/api/jobs/1
+Content-Type: application/json
+Authorization: Bearer {{token2}}
+
+{ "title": "Взлом", "company": "X", "salaryFrom": 1, "salaryTo": 2, "isRemote": true, "sphereId": 1 }
+
+### Загрузка логотипа (положите logo.png рядом с этим файлом)
+POST {{host}}/api/jobs/1/logo
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----jobs
+
+------jobs
+Content-Disposition: form-data; name="file"; filename="logo.png"
+Content-Type: image/png
+
+< ./logo.png
+------jobs--
+
+### Удалить (204) — id созданной вами вакансии
+DELETE {{host}}/api/jobs/6
+Authorization: Bearer {{token}}
